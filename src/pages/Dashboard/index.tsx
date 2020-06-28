@@ -3,6 +3,7 @@ import { Image, ScrollView } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
+import { Omit } from '@testing-library/react-native';
 import Logo from '../../assets/logo-header.png';
 import SearchInput from '../../components/SearchInput';
 
@@ -59,7 +60,23 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      // Load Foods from API
+      const { data } = await api.get('foods', {
+        params: {
+          category_like: selectedCategory,
+          name_like: searchValue,
+        },
+      });
+
+      const foodData: Food[] = data.map(
+        (food: Omit<Food, 'formattedPrice'>) => {
+          return {
+            ...food,
+            formattedPrice: formatValue(food.price),
+          };
+        },
+      );
+
+      setFoods(foodData);
     }
 
     loadFoods();
@@ -67,14 +84,20 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadCategories(): Promise<void> {
-      // Load categories from API
+      const { data: categoriesData } = await api.get('categories');
+
+      setCategories(categoriesData);
     }
 
     loadCategories();
-  }, []);
+  }, [searchValue]);
 
   function handleSelectCategory(id: number): void {
-    // Select / deselect category
+    if (id === selectedCategory) {
+      setSelectedCategory(undefined);
+    } else {
+      setSelectedCategory(id);
+    }
   }
 
   return (
